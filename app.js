@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", async (request, response) => {
   createNotes();
   //table was created => load data
+  // gives you an Object !
   const { rows } = await postgres.sql`SELECT * FROM notes`;
   return response.json(rows);
 });
