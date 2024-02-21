@@ -9,15 +9,14 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/", async (request, response) => {
   createNotes();
-  // table was created => load data
-  // wir bekommen hier ein Objekt mit rows zurück
+  //table was created => load data
   const { rows } = await postgres.sql`SELECT * FROM notes`;
   return response.json(rows);
-  //   return response.json({ message: "Welcome to our note taking app" });
 });
 
 app.get("/:id", async (request, response) => {
   createNotes();
+  //table was created => load data
   const { id } = request.params;
   const { rows } =
     await postgres.sql`SELECT * FROM notes WHERE id = ${id}`;
@@ -36,39 +35,49 @@ app.post("/", async (request, response) => {
     await postgres.sql`INSERT INTO notes (content) VALUES (${content})`;
     response.json({ message: "Successfully created note." });
   } else {
-    response.json({ error: "Note NOT createt. Content is missing." });
+    response.json({ error: "Note NOT created. Content is missing." });
   }
 });
 
-app.put("/:id", async (request, response) => {
+/* vegan delete route */
+app.delete("/:tofu", async (request, response) => {
   createNotes();
-  const { id } = request.params;
-  const { content } = request.body;
-
-  await postgres.sql`UPDATE notes SET ${content} WHERE id = ${id}`;
-  response.json({ message: "tralala" });
-});
-
-app.delete("/:id", async (request, response) => {
-  createNotes();
-  const { id } = request.params;
+  /* const  tofu  = request.params.tofu; */
+  const { tofu } = request.params;
   const { rowCount } =
-    await postgres.sql`DELETE FROM notes WHERE id = ${id}`;
+    await postgres.sql`DELETE FROM notes WHERE id = ${tofu}`;
 
   if (!rowCount) {
     return response.json({ error: "Note not found." });
   }
-  response.json({ message: "Successfully delete note." });
+
+  response.json({ message: "Successfully deleted note." });
 });
 
+app.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  const { content } = req.body;
+
+  const { rowCount } =
+    await postgres.sql`UPDATE notes SET content = ${content} WHERE id=${id}`;
+
+  if (!rowCount) {
+    return res.json({ error: "note not found" });
+  }
+
+  return res.json("Successfully edited the note.");
+});
+
+// default catch-all handler
 app.get("*", (request, response) => {
   response.status(404).json({ message: "route not defined" });
 });
 
 module.exports = app;
 
-/**
- * - we want to create a new table
+/*
+ * - we want to create a new table called notes
+ * - from within our code
  */
 async function createNotes() {
   await postgres.sql`CREATE TABLE IF NOT EXISTS notes (
@@ -76,9 +85,3 @@ async function createNotes() {
         content VARCHAR(255)
     )`;
 }
-
-// curl -X POST http://localhost:3000 -H 'Content-Type: application/json' -d '{"content":"Es geht der Bibabutzemann"}'
-
-// curl -X DELETE http://localhost:3000/6 -H 'Content-Type: plain/text' -d '{"content":"My second note"}'
-
-// curl -X PUT http://localhost:3000/1 -H 'Content-Type: application/json' -d '{"content":"Es geht der Bibabutzemann"}'
