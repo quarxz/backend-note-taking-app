@@ -4,8 +4,8 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
 
 app.get("/", async (request, response) => {
   createNotes();
@@ -40,11 +40,14 @@ app.post("/", async (request, response) => {
   }
 });
 
-// app.put("/:id", (request, response) => {
-//   createNotes();
-//   const { id } = request.params;
-//   const
-// });
+app.put("/:id", async (request, response) => {
+  createNotes();
+  const { id } = request.params;
+  const { content } = request.body;
+
+  await postgres.sql`UPDATE notes SET ${content} WHERE id = ${id}`;
+  response.json({ message: "tralala" });
+});
 
 app.delete("/:id", async (request, response) => {
   createNotes();
@@ -77,3 +80,5 @@ async function createNotes() {
 // curl -X POST http://localhost:3000 -H 'Content-Type: application/json' -d '{"content":"Es geht der Bibabutzemann"}'
 
 // curl -X DELETE http://localhost:3000/6 -H 'Content-Type: plain/text' -d '{"content":"My second note"}'
+
+// curl -X PUT http://localhost:3000/1 -H 'Content-Type: application/json' -d '{"content":"Es geht der Bibabutzemann"}'
