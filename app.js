@@ -76,10 +76,10 @@ app.get("/users/:user", async (req, res) => {
 
   /* select all notes from a specific user */
   const { rows } =
-    await postgres.sql`SELECT * FROM notes RIGHT JOIN users ON notes.userid = users.id WHERE users.name = INITCAP(${user})`;
+    await postgres.sql`SELECT * FROM users LEFT JOIN notes ON users.id = notes.userid WHERE users.name=INITCAP(${user})`;
 
   /* The following query yields the same result */
-  /* SELECT * FROM users LEFT JOIN notes ON users.id = notes.userid WHERE users.name=${user} */
+  /* SELECT * FROM users LEFT JOIN notes ON users.id = notes.userid WHERE users.name=INITCAP(${user}) */
 
   return res.json(rows);
 });
