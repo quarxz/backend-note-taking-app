@@ -84,6 +84,20 @@ app.get("/users/:user", async (req, res) => {
   return res.json(rows);
 });
 
+app.get("/users/:user/:id", async (req, res) => {
+  createTables();
+  const { user } = req.params;
+  const { id } = req.params;
+
+  const { rows } =
+    await postgres.sql`SELECT notes.content, notes.id, users.name FROM users LEFT JOIN notes ON users.id = notes.userid WHERE users.name=INITCAP(${user}) AND notes.id = ${id}`;
+
+  // return res.json({
+  //   message: "Ein Eintrag von user: " + user + " mit id: " + id,
+  // });
+  return res.json(rows);
+});
+
 // default catch-all handler
 app.get("*", (request, response) => {
   response.status(404).json({ message: "route not defined" });
