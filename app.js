@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", async (request, response) => {
-  createNotes();
+  createTables();
   //table was created => load data
   // gives you an Object !
   const { rows } = await postgres.sql`SELECT * FROM notes`;
@@ -16,7 +16,7 @@ app.get("/", async (request, response) => {
 });
 
 app.get("/:id", async (request, response) => {
-  createNotes();
+  createTables();
   //table was created => load data
   const { id } = request.params;
   const { rows } =
@@ -30,7 +30,7 @@ app.get("/:id", async (request, response) => {
 });
 
 app.post("/", async (request, response) => {
-  createNotes();
+  createTables();
   const { content } = request.body;
   if (content) {
     await postgres.sql`INSERT INTO notes (content) VALUES (${content})`;
@@ -42,7 +42,7 @@ app.post("/", async (request, response) => {
 
 /* vegan delete route */
 app.delete("/:tofu", async (request, response) => {
-  createNotes();
+  createTables();
   /* const  tofu  = request.params.tofu; */
   const { tofu } = request.params;
   const { rowCount } =
@@ -56,7 +56,9 @@ app.delete("/:tofu", async (request, response) => {
 });
 
 app.put("/:id", async (req, res) => {
-  const id = req.params.id;
+  createTables();
+  // const id = req.params.id;
+  const { id } = req.params;
   const { content } = req.body;
 
   const { rowCount } =
@@ -80,9 +82,35 @@ module.exports = app;
  * - we want to create a new table called notes
  * - from within our code
  */
-async function createNotes() {
+async function createTables() {
+  await postgres.sql`CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+  )`;
   await postgres.sql`CREATE TABLE IF NOT EXISTS notes (
-        id SERIAL PRIMARY KEY,
-        content VARCHAR(255)
-    )`;
+      id SERIAL PRIMARY KEY,
+      content VARCHAR(255),
+      userid INT REFERENCES users (id)
+  )`;
 }
+
+/**
+ * (JOINS!)
+ *
+ * todo: multiple users with multiple notes
+ * - create another table users
+ * - users has to references the table notes
+ *
+ * user table:
+ * - id
+ * - name
+ *
+ * note table:
+ * - id
+ * - content
+ * - userId
+ *
+ *
+ *  exercise get one note from spezific user
+ *
+ * */
