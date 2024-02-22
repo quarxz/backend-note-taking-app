@@ -10,7 +10,6 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", async (request, response) => {
   createTables();
   //table was created => load data
-  // gives you an Object !
   const { rows } = await postgres.sql`SELECT * FROM notes`;
   return response.json(rows);
 });
@@ -57,8 +56,7 @@ app.delete("/:tofu", async (request, response) => {
 
 app.put("/:id", async (req, res) => {
   createTables();
-  // const id = req.params.id;
-  const { id } = req.params;
+  const id = req.params.id;
   const { content } = req.body;
 
   const { rowCount } =
@@ -69,6 +67,21 @@ app.put("/:id", async (req, res) => {
   }
 
   return res.json("Successfully edited the note.");
+});
+
+app.get("/users/:user", async (req, res) => {
+  createTables();
+  /* const  user  = req.params.user; */
+  const { user } = req.params;
+
+  /* select all notes from a specific user */
+  const { rows } =
+    await postgres.sql`SELECT * FROM notes RIGHT JOIN users ON notes."userId" = users.id WHERE users.name = ${user}`;
+
+  /* The following query yields the same result */
+  /* SELECT * FROM users LEFT JOIN notes ON users.id = notes."userId" WHERE users.name=${user} */
+
+  return res.json(rows);
 });
 
 // default catch-all handler
@@ -84,33 +97,27 @@ module.exports = app;
  */
 async function createTables() {
   await postgres.sql`CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-  )`;
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) UNIQUE
+      )`;
   await postgres.sql`CREATE TABLE IF NOT EXISTS notes (
-      id SERIAL PRIMARY KEY,
-      content VARCHAR(255),
-      userid INT REFERENCES users (id)
-  )`;
+        id SERIAL PRIMARY KEY,
+        content VARCHAR(255),
+        "userId" INTEGER REFERENCES users (id)
+    )`;
 }
 
-/**
- * (JOINS!)
+/*
+ * goal: an app with multiple user with multiple notes
+ * - create another table called users
+ * - users has to reference the table notes
  *
- * todo: multiple users with multiple notes
- * - create another table users
- * - users has to references the table notes
- *
- * user table:
+ * users table:
  * - id
  * - name
  *
- * note table:
+ * notes table:
  * - id
  * - content
  * - userId
- *
- *
- *  exercise get one note from spezific user
- *
- * */
+ */
