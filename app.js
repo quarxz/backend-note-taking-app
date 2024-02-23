@@ -4,8 +4,8 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
 
 app.get("/", async (request, response) => {
   createTables();
@@ -86,16 +86,84 @@ app.get("/users/:user", async (req, res) => {
 
 app.get("/users/:user/:id", async (req, res) => {
   createTables();
-  const { user } = req.params;
-  const { id } = req.params;
+  const { user, id } = req.params;
 
   const { rows } =
     await postgres.sql`SELECT notes.content, notes.id, users.name FROM users LEFT JOIN notes ON users.id = notes.userid WHERE users.name=INITCAP(${user}) AND notes.id = ${id}`;
 
+  if (!rows.length) {
+    return res.json({ message: "note not found" });
+  }
+
   // return res.json({
   //   message: "Ein Eintrag von user: " + user + " mit id: " + id,
   // });
-  return res.json(rows);
+  return res.json(rows[0]);
+});
+
+/**
+ *  - create anouther route with the method PUT
+ *  - specific route => "/users/:user/:id"
+ *  - update not of the incoming id and user
+ */
+app.put("/users/:user/:id", async (req, res) => {
+  createTables();
+
+  /**
+   * Meine Lösung
+   */
+  const { user, id } = req.params;
+  const { content } = req.body;
+
+  if (content) {
+    const { rowCount } =
+      await postgres.sql`UPDATE notes SET content = ${content} FROM users WHERE notes.id = ${id} and users.name=${user}`;
+
+    if (!rowCount) {
+      return res.json({ error: "note not found" });
+    }
+
+    return res.json("Successfully edited note");
+  } else {
+    return res.json("Note NOT created since content is missing");
+  }
+
+  // return res.json(rows);
+  // return res.json({
+  //   message: `Der Eintrag id:${id} "${content}" von ${user} wurde erfolgreich geändert!`,
+  // });
+
+  /**
+   * Lösung von Ernst
+   */
+  // const user = req.params.user; //eric
+  // const notesId = req.params.id; //5
+  // const { content } = req.body;
+
+  // if (content) {
+  //   /* first check to see if we can find the user */
+  //   const {
+  //     rows: [{ id }],
+  //   } = await postgres.sql`SELECT id FROM users WHERE users.name = ${user}`;
+
+  //   /*
+  //   { rowCount: 1,
+  //       rows: [ { id:1 } ]
+  //   }
+  //   */
+
+  //   /* then use that user's id to update the requested note */
+  //   const { rowCount } =
+  //     await postgres.sql`UPDATE notes SET content = ${content} WHERE notes."userId" = ${id} AND notes.id = ${notesId}`;
+
+  //   if (!rowCount) {
+  //     return res.json({ error: "note not found" });
+  //   }
+
+  //   return res.json("Successfully edited note");
+  // } else {
+  //   return res.json("Note NOT created since content is missing.");
+  // }
 });
 
 // default catch-all handler
